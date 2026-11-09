@@ -704,6 +704,24 @@ def sqlite_snapshot(src: str, dst: Path) -> bool:
         return False
 
 
+def esc(p: str) -> str:
+    """Manifest is TSV: file names may contain tabs/newlines (seen in the wild)."""
+    return p.replace("\\", "\\\\").replace("\t", "\\t").replace("\n", "\\n").replace("\r", "\\r")
+
+
+def unesc(p: str) -> str:
+    out, i = [], 0
+    while i < len(p):
+        c = p[i]
+        if c == "\\" and i + 1 < len(p):
+            out.append({"t": "\t", "n": "\n", "r": "\r", "\\": "\\"}.get(p[i + 1], p[i + 1]))
+            i += 2
+        else:
+            out.append(c)
+            i += 1
+    return "".join(out)
+
+
 def manifest_path_for(archive: Path) -> Path:
     return archive.with_name(archive.name.replace(".tar.zst", ".files.tsv"))
 
@@ -754,7 +772,7 @@ def archive_unit(u: Unit, status: Status) -> dict:
                     ti.type = tarfile.SYMTYPE
                     ti.linkname = e.link
                     tar.addfile(ti)
-                    manifest.append(f"{e.arc}\t0\t{e.mtime_ns}\t-\tl")
+                    manifest.append(f"{esc(e.arc)}\t0\t{e.mtime_ns}\t-\tl")
                     continue
                 if e.kind == "g":
                     data = u.generated[e.arc]
@@ -762,7 +780,7 @@ def archive_unit(u: Unit, status: Status) -> dict:
                     ti.mtime = time.time()
                     r = HashingReader(io.BytesIO(data), len(data), status)
                     tar.addfile(ti, r)
-                    manifest.append(f"{e.arc}\t{len(data)}\t0\t{r.h.hexdigest()}\tg")
+                    manifest.append(f"{esc(e.arc)}\t{len(data)}\t0\t{r.h.hexdigest()}\tg")
                     continue
                 if any(e.path == s + suf for s in snapshotted for suf in ("-wal", "-shm", "-journal")):
                     continue
@@ -782,7 +800,7 @@ def archive_unit(u: Unit, status: Status) -> dict:
                         tar.addfile(ti, r)
                     if r.short:
                         warnings.append(f"{e.arc}: changed while being copied")
-                    manifest.append(f"{e.arc}\t{size}\t{e.mtime_ns}\t{r.h.hexdigest()}\t{kind}")
+                    manifest.append(f"{esc(e.arc)}\t{size}\t{e.mtime_ns}\t{r.h.hexdigest()}\t{kind}")
                 except PermissionError as ex:
                     warnings.append(f"{e.arc}: No access ({ex.strerror}) / Нет доступа")
                 except FileNotFoundError:
@@ -834,7 +852,7 @@ def verify_archive(archive: Path, manifest_path: Path, status: Status | None, sp
         if not line or line.startswith("#"):
             continue
         p, size, mt, sha, kind = line.split("\t")
-        want[p] = (int(size), int(mt), sha, kind)
+        want[unesc(p)] = (int(size), int(mt), sha, kind)
     proc = subprocess.Popen([ZSTD, "-dc", "--long=27", "-q"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     fh = hashlib.sha256()
     feed_error = []
@@ -930,8 +948,11 @@ def verify_archive(archive: Path, manifest_path: Path, status: Status | None, sp
 
 # ---- generated units -----------------------------------------------------------
 def run_cmd(cmd, timeout=60) -> str:
+    # GIT_OPTIONAL_LOCKS=0: `git status` must not rewrite .git/index, or every repo
+    # would look changed on the next run and be re-archived.
+    env = {**os.environ, "GIT_OPTIONAL_LOCKS": "0"}
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
         return r.stdout + (("\n[stderr]\n" + r.stderr) if r.returncode and r.stderr else "")
     except Exception as e:  # noqa: BLE001
         return f"[failed: {e}]"
