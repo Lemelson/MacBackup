@@ -568,7 +568,9 @@ def scan_unit(u: Unit, secret_hits: list | None):
     def add_file(p: str, st: os.stat_result):
         arc = os.path.relpath(p, HOME)
         name = os.path.basename(p)
-        if name in EXCLUDE_FILE_NAMES:
+        if name in EXCLUDE_FILE_NAMES or name.endswith("-shm"):
+            # SQLite "-shm" is shared memory, rebuilt on open; reading the database (our own
+            # snapshot) touches it, which would make the part look changed on every run.
             return
         if stat.S_ISLNK(st.st_mode):
             try:
