@@ -34,6 +34,9 @@ if [ -f "$ENGINE" ]; then
 else
   echo "warning: $ENGINE not found, the app will report a missing engine" >&2
 fi
+# Self-contained zstd: the engine copies it to the disk (tools/zstd) so a fresh Mac can restore.
+[ -x build/zstd ] || ../scripts/build-portable-zstd.sh "$PWD/build/zstd"
+cp build/zstd "$STAGE/Contents/Resources/engine/zstd"
 for l in en ru; do printf '"CFBundleDisplayName" = "MacBackup";\n"CFBundleName" = "MacBackup";\n' > "$STAGE/Contents/Resources/$l.lproj/InfoPlist.strings"; done
 
 cat > "$STAGE/Contents/Info.plist" <<'PLIST'

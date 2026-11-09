@@ -8,6 +8,7 @@ Explain results to the owner in plain words; never print secret values (Keychain
 | What | Path |
 |---|---|
 | Engine (one file, Python 3.9+ stdlib + `zstd` CLI) | on the Mac: `MacBackup.app/Contents/Resources/engine/macbackup.py`; copy here: `tools/macbackup.py` |
+| Self-contained `zstd` (universal, only libSystem) | `tools/zstd` here; built by `scripts/build-portable-zstd.sh`, bundled in the app |
 | Settings | `~/Library/Application Support/MacBackup/config.json` |
 | Live status (updated every second while running) | `~/Library/Application Support/MacBackup/state/status.json` |
 | Index | `index.json` here (mirror: `…/MacBackup/state/index.json` on the Mac) |
@@ -35,7 +36,10 @@ $E cancel
   (`path, size, mtime_ns, sha256, kind`; kind f=file, s=SQLite snapshot, l=symlink, g=generated).
   Layers: `keys`, `ai`, `projects`, `system`, `media` (`media` = plain uncompressed folder copies, path relative to the disk root).
 - Parts are rebuilt from the home folder on every run, so new folders are picked up automatically.
-- Paths in archives are relative to `~` → restore is always `tar -xf X -C ~`.
+- Paths in archives are relative to `~` → restore is always `tar -xf X -C ~`, with `tools/` of this drive
+  first in `PATH`: macOS's `tar` runs an external `zstd` for `.tar.zst`, and a fresh Mac has none.
+- macOS's `tar` turns AppleDouble entries (`._name`) into extended attributes of `name` instead of files;
+  the manifest still lists them, so they look "missing" in a file-by-file comparison. Expected.
 - **Incremental**: fingerprint over (path, kind, size, mtime_ns, link target) + engine version + zstd args.
   Same fingerprint + archive present + last verification ok → skipped. Bump `ENGINE_VERSION` to rebuild everything.
 - **Excluded**: dependency/build/cache directory names (`EXCLUDE_DIR_NAMES`), videos > `video_skip_mb`,

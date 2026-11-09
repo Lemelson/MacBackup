@@ -24,11 +24,16 @@ Which archive contains a file: `grep -l "file-name" archives/*/*.files.tsv archi
 
 ## Restore on a new Mac
 
-Each archive unpacks **into the home folder** with the `tar` built into macOS — nothing to install:
+Each archive unpacks **into the home folder** with the `tar` built into macOS — nothing to install.
+macOS's `tar` needs a `zstd` program to read `.tar.zst`; a self-contained one is on this drive in `tools/`,
+so first, once per Terminal window:
 
 ```bash
+export PATH="/Volumes/<Disk>/MacBackup/tools:$PATH"
 tar -xf /Volumes/<Disk>/MacBackup/archives/projects/my-app.tar.zst -C ~
 ```
+
+(Without that line `tar` says `unable to run program "zstd -d -qq"`. `brew install zstd` works too.)
 
 Suggested order (or ask Claude Code / Codex: "restore my Mac from this drive using its README"):
 

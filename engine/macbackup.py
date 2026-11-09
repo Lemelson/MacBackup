@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import filecmp
 import hashlib
 import io
 import json
@@ -1230,6 +1231,26 @@ def copy_docs_to_disk():
                     break
         (DEST / "tools").mkdir(exist_ok=True)
         shutil.copy2(Path(__file__), DEST / "tools" / "macbackup.py")
+        copy_portable_zstd()
+    except OSError:
+        pass
+
+
+def copy_portable_zstd():
+    """macOS's built-in tar needs an external `zstd` to read .tar.zst, and a fresh Mac has none.
+    Put the self-contained one (built by scripts/build-portable-zstd.sh, bundled in the app)
+    on the disk, so restore is:  PATH="<disk>/MacBackup/tools:$PATH" tar -xf X -C ~"""
+    src = Path(os.environ.get("MACBACKUP_PORTABLE_ZSTD", ENGINE_DIR / "zstd"))
+    dst = DEST / "tools" / "zstd"
+    if not src.is_file():
+        return
+    try:
+        if dst.is_file() and filecmp.cmp(src, dst, shallow=False):
+            return
+        tmp = dst.with_name("zstd.partial")
+        shutil.copy2(src, tmp)
+        tmp.chmod(0o755)
+        os.replace(tmp, dst)
     except OSError:
         pass
 

@@ -57,8 +57,9 @@ and keeps it fresh automatically.
   API, so you get a consistent snapshot even while the app is writing.
 - **Secrets collected in one place.** All `.env`, `.pem`, tokens and key folders from every project are also
   gathered into `keys/secret-files`; optionally chosen Keychain passwords are exported too.
-- **Restore needs nothing.** Archives are `tar` + `zstd`; macOS's built-in `tar` reads them:
-  `tar -xf part.tar.zst -C ~`.
+- **Restore needs nothing installed.** Archives are `tar` + `zstd`. macOS's built-in `tar` reads them with
+  the self-contained `zstd` that MacBackup keeps on the drive (`tools/zstd`):
+  `PATH="<drive>/MacBackup/tools:$PATH" tar -xf part.tar.zst -C ~`.
 - **Calm about real life.** Unplug the drive in the middle of a backup — nothing breaks. It pauses, cleans up
   the half-written file next time and continues where it stopped. No alarm notifications; a reminder comes
   only if a backup is overdue for days.
@@ -80,7 +81,7 @@ They solve different problems, and they work best **together**.
 | Size on the drive | ≈ everything you use (often 500 GB – 1 TB) + history | ≈ 15–20% of it (e.g. 150 GB of 813 GB) |
 | Shares a drive with your films | Wants its own volume and space for history | A folder next to anything else |
 | Restore | Whole Mac via Migration Assistant | Any single project, or everything, with `tar` — on any Mac |
-| Needs | Same macOS family, Migration Assistant | Nothing but the built-in `tar` |
+| Needs | Same macOS family, Migration Assistant | Nothing: built-in `tar` + `zstd` kept on the drive |
 | Proof the copy is good | Trust | Every file re-hashed after every run |
 | Understands dev work | No — copies `node_modules` and caches too; a live database may be caught mid-write | Skips rebuildable junk, snapshots live DBs, gathers every secret, reports unpushed git work |
 | Readable without the app | Only through Time Machine | Plain archives + manifests + `README.md` / `AGENTS.md` |
@@ -157,10 +158,13 @@ $E cancel          # stop gracefully
 
 ## Restore on a new Mac
 
-Every archive restores into your home folder with the tar that comes with macOS:
+Every archive restores into your home folder with the tar that comes with macOS. It needs a `zstd`
+program for `.tar.zst`, and a fresh Mac has none, so MacBackup keeps a self-contained one (universal,
+no dependencies) on the drive in `tools/`:
 
 ```bash
 cd /Volumes/<YourDisk>/MacBackup
+export PATH="$PWD/tools:$PATH"                                   # use the zstd from the drive
 for a in archives/keys/*.tar.zst; do tar -xf "$a" -C ~; done    # keys first
 chmod 700 ~/.ssh && chmod 600 ~/.ssh/*
 find archives -name '*.tar.zst' -print0 | xargs -0 -n1 tar -C ~ -xf  # or everything
@@ -187,7 +191,7 @@ engine/macbackup.py      the whole engine (Python 3.9+, stdlib only, + zstd CLI)
 engine/DISK-README.md    copied to the drive as README.md (for people)
 engine/DISK-AGENTS.md    copied to the drive as AGENTS.md (for AI agents)
 app/                     SwiftUI app (Swift Package) — build with app/build.sh
-scripts/                 scheduler install/uninstall
+scripts/                 scheduler install/uninstall, build-portable-zstd.sh (zstd for the drive)
 docs/images/             pictures for this README
 ```
 
