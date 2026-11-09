@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>What goes into the backup</title>
+  <rect width="960" height="400" rx="18" fill="#0f172a"/>
+  <text x="32" y="44" fill="#f8fafc" font-size="22" font-weight="600">What goes in — and what stays out</text>
+  <text x="32" y="70" fill="#94a3b8" font-size="14">Example from a real 1 TB MacBook: 813 GB used, the work that matters is ~190 GB, ~150 GB after compression.</text>
+
+  <g font-size="13">
+    <rect x="32" y="96" width="210" height="196" rx="14" fill="#7c3aed1f" stroke="#7c3aed"/>
+    <text x="48" y="124" fill="#ede9fe" font-size="16" font-weight="600">Keys &amp; access</text>
+    <text x="48" y="148" fill="#c4b5fd">SSH keys</text>
+    <text x="48" y="168" fill="#c4b5fd">Keychain files</text>
+    <text x="48" y="188" fill="#c4b5fd">Chosen service passwords</text>
+    <text x="48" y="208" fill="#c4b5fd">Every .env, token, .pem</text>
+    <text x="48" y="228" fill="#c4b5fd">gh, cloud CLI logins</text>
+    <text x="48" y="276" fill="#ede9fe" font-size="20" font-weight="600">&lt; 1 GB</text>
+
+    <rect x="258" y="96" width="210" height="196" rx="14" fill="#0ea5e91f" stroke="#0ea5e9"/>
+    <text x="274" y="124" fill="#e0f2fe" font-size="16" font-weight="600">AI tools</text>
+    <text x="274" y="148" fill="#7dd3fc">Codex sessions (per month)</text>
+    <text x="274" y="168" fill="#7dd3fc">Claude Code chats, skills,</text>
+    <text x="274" y="188" fill="#7dd3fc">memory, settings</text>
+    <text x="274" y="208" fill="#7dd3fc">Claude / Codex apps</text>
+    <text x="274" y="228" fill="#7dd3fc">Gemini, Cursor, Grok…</text>
+    <text x="274" y="276" fill="#e0f2fe" font-size="20" font-weight="600">~48 GB</text>
+
+    <rect x="484" y="96" width="210" height="196" rx="14" fill="#10b9811f" stroke="#10b981"/>
+    <text x="500" y="124" fill="#d1fae5" font-size="16" font-weight="600">Projects</text>
+    <text x="500" y="148" fill="#6ee7b7">Every folder in ~ and</text>
+    <text x="500" y="168" fill="#6ee7b7">Documents: one archive each</text>
+    <text x="500" y="188" fill="#6ee7b7">Full git history, unpushed</text>
+    <text x="500" y="208" fill="#6ee7b7">commits, uncommitted work</text>
+    <text x="500" y="228" fill="#6ee7b7">Live databases (snapshots)</text>
+    <text x="500" y="276" fill="#d1fae5" font-size="20" font-weight="600">~116 GB</text>
+
+    <rect x="710" y="96" width="218" height="196" rx="14" fill="#f59e0b1f" stroke="#f59e0b"/>
+    <text x="726" y="124" fill="#fef3c7" font-size="16" font-weight="600">System &amp; settings</text>
+    <text x="726" y="148" fill="#fcd34d">Dotfiles, ~/.config, ~/.local</text>
+    <text x="726" y="168" fill="#fcd34d">Login items, preferences</text>
+    <text x="726" y="188" fill="#fcd34d">Browser profiles</text>
+    <text x="726" y="208" fill="#fcd34d">Voice Memos, app data</text>
+    <text x="726" y="228" fill="#fcd34d">List of apps, brew, repos</text>
+    <text x="726" y="276" fill="#fef3c7" font-size="20" font-weight="600">~25 GB</text>
+  </g>
+
+  <rect x="32" y="310" width="896" height="66" rx="14" fill="#1e293b" stroke="#334155"/>
+  <text x="48" y="336" fill="#f8fafc" font-size="15" font-weight="600">Left out on purpose (comes back by itself):</text>
+  <text x="48" y="360" fill="#94a3b8" font-size="13">node_modules · venv · build output · caches · big videos in projects (listed) · iCloud Photos · Downloads · Movies</text>
+</svg>

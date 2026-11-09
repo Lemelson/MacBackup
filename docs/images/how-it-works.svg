@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 430" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title>How MacBackup works</title>
+  <rect width="960" height="430" rx="18" fill="#0f172a"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+  <text x="32" y="44" fill="#f8fafc" font-size="22" font-weight="600">How one backup run works</text>
+  <text x="32" y="70" fill="#94a3b8" font-size="14">Every part of your Mac is its own archive. Only parts that changed are rewritten — and every archive is checked byte by byte.</text>
+
+  <!-- Mac -->
+  <rect x="32" y="110" width="170" height="230" rx="14" fill="#1e293b" stroke="#334155"/>
+  <text x="117" y="140" fill="#f8fafc" font-size="16" font-weight="600" text-anchor="middle">Your Mac</text>
+  <g font-size="13" fill="#cbd5e1">
+    <rect x="48" y="156" width="138" height="30" rx="8" fill="#7c3aed22" stroke="#7c3aed"/><text x="117" y="176" text-anchor="middle">Keys &amp; access</text>
+    <rect x="48" y="194" width="138" height="30" rx="8" fill="#0ea5e922" stroke="#0ea5e9"/><text x="117" y="214" text-anchor="middle">Codex &amp; Claude</text>
+    <rect x="48" y="232" width="138" height="30" rx="8" fill="#10b98122" stroke="#10b981"/><text x="117" y="252" text-anchor="middle">Projects + git</text>
+    <rect x="48" y="270" width="138" height="30" rx="8" fill="#f59e0b22" stroke="#f59e0b"/><text x="117" y="290" text-anchor="middle">System &amp; settings</text>
+  </g>
+  <text x="117" y="326" fill="#64748b" font-size="12" text-anchor="middle">~500 parts</text>
+
+  <!-- Scan -->
+  <line x1="204" y1="225" x2="246" y2="225" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="250" y="170" width="150" height="110" rx="14" fill="#1e293b" stroke="#334155"/>
+  <text x="325" y="200" fill="#f8fafc" font-size="16" font-weight="600" text-anchor="middle">1. Scan</text>
+  <text x="325" y="224" fill="#cbd5e1" font-size="12.5" text-anchor="middle">fingerprint of names,</text>
+  <text x="325" y="242" fill="#cbd5e1" font-size="12.5" text-anchor="middle">sizes, change dates</text>
+  <text x="325" y="264" fill="#64748b" font-size="12" text-anchor="middle">~1 min for 1M files</text>
+
+  <!-- Decision -->
+  <line x1="402" y1="225" x2="444" y2="225" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+  <polygon points="510,170 570,225 510,280 450,225" fill="#1e293b" stroke="#475569"/>
+  <text x="510" y="221" fill="#f8fafc" font-size="14" font-weight="600" text-anchor="middle">changed?</text>
+  <text x="510" y="240" fill="#64748b" font-size="11.5" text-anchor="middle">since last run</text>
+
+  <!-- skip -->
+  <path d="M510 168 V120 H784" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <text x="522" y="140" fill="#94a3b8" font-size="12.5">no → keep the archive as is</text>
+
+  <!-- compress -->
+  <line x1="572" y1="225" x2="612" y2="225" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+  <text x="578" y="215" fill="#94a3b8" font-size="12.5">yes</text>
+  <rect x="616" y="170" width="140" height="110" rx="14" fill="#1e293b" stroke="#334155"/>
+  <text x="686" y="200" fill="#f8fafc" font-size="16" font-weight="600" text-anchor="middle">2. Compress</text>
+  <text x="686" y="224" fill="#cbd5e1" font-size="12.5" text-anchor="middle">tar + zstd -9</text>
+  <text x="686" y="242" fill="#cbd5e1" font-size="12.5" text-anchor="middle">live SQLite snapshot</text>
+  <text x="686" y="264" fill="#64748b" font-size="12" text-anchor="middle">~400 MB/s</text>
+
+  <!-- verify -->
+  <line x1="686" y1="282" x2="686" y2="318" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+  <rect x="580" y="322" width="212" height="84" rx="14" fill="#14532d55" stroke="#22c55e"/>
+  <text x="686" y="350" fill="#f8fafc" font-size="16" font-weight="600" text-anchor="middle">3. Verify</text>
+  <text x="686" y="372" fill="#bbf7d0" font-size="12.5" text-anchor="middle">unpack, SHA-256 every file,</text>
+  <text x="686" y="390" fill="#bbf7d0" font-size="12.5" text-anchor="middle">compare with the originals</text>
+
+  <!-- disk -->
+  <rect x="790" y="96" width="140" height="210" rx="14" fill="#1e293b" stroke="#334155"/>
+  <text x="860" y="126" fill="#f8fafc" font-size="16" font-weight="600" text-anchor="middle">Backup disk</text>
+  <g font-size="12" fill="#cbd5e1">
+    <text x="806" y="154">archives/*.tar.zst</text>
+    <text x="806" y="176">*.files.tsv</text>
+    <text x="806" y="198">index.json</text>
+    <text x="806" y="220">inventory/</text>
+    <text x="806" y="242">logs/</text>
+    <text x="806" y="264">README.md</text>
+    <text x="806" y="286">AGENTS.md</text>
+  </g>
+  <path d="M794 364 H830 V310" fill="none" stroke="#22c55e" stroke-width="2" marker-end="url(#a)"/>
+  <text x="836" y="350" fill="#86efac" font-size="12.5">only if</text>
+  <text x="836" y="366" fill="#86efac" font-size="12.5">identical</text>
+</svg>

@@ -1,0 +1,20 @@
+{
+  "language": "en",
+  "disk_volume": "/Volumes/Backup",
+  "dest_folder": "MacBackup",
+  "due_days": 7,
+  "reminder_grace_days": 3,
+  "reminder_every_hours": 24,
+  "home_skip": [],
+  "documents_skip": ["Movies"],
+  "split_dirs": [],
+  "system_folders": [],
+  "exclude_paths": [],
+  "mirror_folders": [
+    {"id": "media/course-videos", "title": "Course videos", "source": "~/Courses/Videos", "dest": "Courses/Videos"}
+  ],
+  "secret_extra_paths": [],
+  "keychain_export_regex": "",
+  "app_data_folders": ["Obsidian", "Transmission"],
+  "video_skip_mb": 20
+}
