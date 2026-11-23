@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MacBackup — Incremental Disaster-Recovery Backup for Developer Macs (Claude Code, Codex, Git, Keys)</title>
+  <meta name="description" content="Verified, incremental disaster-recovery backup for developer Macs. Back up SSH keys, .env secrets, Claude Code & Codex history, and every Git repo with zstd — restorable on any Mac with built-in tar.">
+  <meta name="keywords" content="MacBackup, macOS backup, Time Machine alternative, developer Mac backup, disaster recovery macOS, Claude Code backup, Codex backup, incremental backup, zstd tar backup, Apple Silicon">
+  <meta name="author" content="Artem Lemelson">
+  <meta name="theme-color" content="#0b101b">
+  <link rel="canonical" href="https://lemelson.github.io/MacBackup/">
+
+  <link rel="icon" type="image/png" href="images/icon.png">
+  <link rel="apple-touch-icon" href="images/icon.png">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MacBackup">
+  <meta property="og:url" content="https://lemelson.github.io/MacBackup/">
+  <meta property="og:title" content="MacBackup — Incremental Disaster-Recovery Backup for Developer Macs">
+  <meta property="og:description" content="SSH keys, .env secrets, Claude Code & Codex history, and every Git repo — SHA-256 verified, zstd compressed, restorable on any Mac with built-in tar.">
+  <meta property="og:image" content="https://lemelson.github.io/MacBackup/images/og-card.png">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="640">
+  <meta property="og:image:alt" content="MacBackup native SwiftUI macOS app showing verified incremental backups of SSH keys, Claude Code, Codex, and projects">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MacBackup — Disaster-Recovery Backup for Developer Macs">
+  <meta name="twitter:description" content="Keys, Claude Code & Codex history, and every Git project — SHA-256 verified, ~150 GB instead of 800 GB, restorable on any Mac with built-in tar.">
+  <meta name="twitter:image" content="https://lemelson.github.io/MacBackup/images/og-card.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "MacBackup",
+    "description": "Verified, incremental disaster-recovery backup for developer Macs. Backs up SSH keys, .env secrets, Claude Code and Codex history, live SQLite databases, and every Git repository with zstd compression — restorable on any Mac with built-in tar.",
+    "url": "https://lemelson.github.io/MacBackup/",
+    "codeRepository": "https://github.com/Lemelson/MacBackup",
+    "downloadUrl": "https://github.com/Lemelson/MacBackup/releases/latest",
+    "softwareVersion": "1.0.1",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "macOS 14+",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "screenshot": "https://lemelson.github.io/MacBackup/images/app-overview.png",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Artem Lemelson",
+      "url": "https://github.com/Lemelson"
+    }
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #0b101b;
+      --bg-elev: #111827;
+      --surface: #141c2c;
+      --surface-hi: #1b2539;
+      --ink: #f8fafc;
+      --ink-muted: #94a3b8;
+      --ink-soft: #64748b;
+      --border: rgba(148, 163, 184, 0.14);
+      --border-strong: rgba(148, 163, 184, 0.26);
+      --blue: #2f80ed;
+      --blue-hover: #1d6fe0;
+      --blue-soft: rgba(47, 128, 237, 0.16);
+      --green: #22c55e;
+      --green-soft: rgba(34, 197, 94, 0.14);
+      --purple: #a78bfa;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --shadow-window: 0 28px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        radial-gradient(900px 480px at 50% -10%, rgba(47, 128, 237, 0.22), transparent 65%),
+        var(--bg);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+    img { max-width: 100%; display: block; }
+    code {
+      font-family: var(--mono);
+      font-size: 0.88em;
+      background: rgba(148, 163, 184, 0.14);
+      padding: 2px 6px;
+      border-radius: 6px;
+      color: #e2e8f0;
+    }
+
+    .wrap {
+      width: min(1120px, calc(100% - 40px));
+      margin-inline: auto;
+    }
+
+    /* Header */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(11, 16, 27, 0.82);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      gap: 16px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.08rem;
+      letter-spacing: -0.02em;
+    }
+    .brand img {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--ink-muted);
+    }
+    .nav-links a {
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .nav-links a:hover { color: var(--ink); }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 18px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.94rem;
+      text-decoration: none;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: transform 0.14s ease, background 0.15s ease, border-color 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary {
+      background: var(--blue);
+      color: #ffffff;
+      box-shadow: 0 8px 24px rgba(47, 128, 237, 0.34);
+    }
+    .btn-primary:hover { background: var(--blue-hover); }
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--ink);
+      border-color: var(--border-strong);
+    }
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.38);
+    }
+    .btn-sm {
+      padding: 8px 14px;
+      font-size: 0.86rem;
+    }
+
+    /* Hero */
+    .hero {
+      padding: 60px 0 36px;
+    }
+    .hero-top {
+      max-width: 820px;
+      margin: 0 auto 38px;
+      text-align: center;
+    }
+    .hero-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 18px;
+      border-radius: 18px;
+      filter: drop-shadow(0 12px 28px rgba(47, 128, 237, 0.35));
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(47, 128, 237, 0.12);
+      border: 1px solid rgba(47, 128, 237, 0.3);
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #93c5fd;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 18px;
+      font-size: clamp(2.15rem, 4.8vw, 3.55rem);
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+      font-weight: 800;
+    }
+    .hero-sub {
+      margin: 0 auto 28px;
+      max-width: 690px;
+      font-size: clamp(1.02rem, 1.8vw, 1.18rem);
+      color: var(--ink-muted);
+      line-height: 1.6;
+    }
+    .hero-sub strong { color: var(--ink); }
+    .hero-cta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .hero-note {
+      font-size: 0.85rem;
+      color: var(--ink-soft);
+    }
+
+    /* Stats */
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    .metric {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+    }
+    .metric-val {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 4px;
+    }
+    .metric-label {
+      font-size: 0.84rem;
+      color: var(--ink-muted);
+    }
+
+    /* App Showcase */
+    .showcase {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+    }
+    .showcase-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 2px 6px 14px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .tab-btn {
+      appearance: none;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--ink-muted);
+      font-family: inherit;
+      font-size: 0.86rem;
+      font-weight: 600;
+      padding: 7px 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .tab-btn:hover {
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .tab-btn.is-active {
+      background: var(--blue);
+      color: #ffffff;
+    }
+    .showcase-caption {
+      font-size: 0.84rem;
+      color: var(--ink-muted);
+    }
+    .showcase-stage {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow-window);
+    }
+    .showcase-stage img { width: 100%; height: auto; }
+    .showcase-panel { display: none; }
+    .showcase-panel.is-active { display: block; }
+
+    /* Sections */
+    section.block {
+      padding: 72px 0 0;
+    }
+    .section-head {
+      max-width: 720px;
+      margin-bottom: 26px;
+    }
+    .section-kicker {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #60a5fa;
+      margin-bottom: 8px;
+    }
+    h2 {
+      margin: 0 0 10px;
+      font-size: clamp(1.65rem, 3vw, 2.3rem);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+    .section-lead {
+      margin: 0;
+      color: var(--ink-muted);
+      font-size: 1.02rem;
+    }
+
+    /* SVG frame */
+    .svg-frame {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px;
+      overflow: hidden;
+    }
+    .svg-frame img {
+      width: 100%;
+      border-radius: 12px;
+    }
+
+    /* Feature Grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 22px;
+    }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 1.04rem;
+      letter-spacing: -0.015em;
+    }
+    .card p {
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--ink-muted);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: #93c5fd;
+      margin-bottom: 11px;
+    }
+    .badge-green {
+      background: var(--green-soft);
+      color: #86efac;
+    }
+
+    /* Comparison table */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+      font-size: 0.93rem;
+    }
+    th, td {
+      padding: 15px 18px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    thead th {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--ink-muted);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    thead th.hl, tbody td.hl {
+      background: rgba(47, 128, 237, 0.09);
+      color: var(--ink);
+    }
+    thead th.hl {
+      color: #93c5fd;
+      font-size: 0.94rem;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    .pill-ok {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: #86efac;
+      font-weight: 700;
+      font-size: 0.82rem;
+    }
+
+    /* Two-column Quick Start & Restore */
+    .split-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      gap: 20px;
+      align-items: start;
+    }
+    .split-grid > * { min-width: 0; }
+    .panel-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 26px;
+      min-width: 0;
+    }
+    .steps {
+      list-style: none;
+      padding: 0;
+      margin: 18px 0 22px;
+      display: grid;
+      gap: 12px;
+      font-size: 0.94rem;
+      color: #cbd5e1;
+    }
+    .steps li {
+      display: flex;
+      gap: 12px;
+      align-items: baseline;
+    }
+    .step-n {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: #93c5fd;
+      font-size: 0.78rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .code-card {
+      background: #070b13;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    .code-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--ink-muted);
+      font-family: var(--mono);
+    }
+    .copy-btn {
+      appearance: none;
+      border: 1px solid var(--border-strong);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .copy-btn:hover { background: rgba(255, 255, 255, 0.14); }
+    pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 0.83rem;
+      line-height: 1.65;
+      color: #e2e8f0;
+    }
+    .c-dim { color: #64748b; }
+    .c-cmd { color: #93c5fd; }
+
+    /* Footer */
+    footer {
+      padding: 60px 0 48px;
+      color: var(--ink-soft);
+      font-size: 0.88rem;
+    }
+    .foot-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .foot-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+    }
+    .foot-links a {
+      text-decoration: none;
+      color: var(--ink-muted);
+      font-weight: 500;
+    }
+    .foot-links a:hover { color: var(--ink); }
+
+    @media (max-width: 960px) {
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .split-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .wrap { width: calc(100% - 28px); }
+      .nav-links { display: none; }
+      .hero { padding-top: 38px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .showcase, .panel-box { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap nav-row">
+      <a class="brand" href="#">
+        <img src="images/icon.png" alt="MacBackup icon">
+        <span>MacBackup</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#inside">What's Inside</a>
+        <a href="#compare">vs Time Machine</a>
+        <a href="#quickstart">Quick Start</a>
+        <a href="#restore">Restore</a>
+      </nav>
+      <div class="nav-actions">
+        <a class="btn btn-ghost btn-sm" href="https://github.com/Lemelson/MacBackup">GitHub</a>
+        <a class="btn btn-primary btn-sm" href="https://github.com/Lemelson/MacBackup/releases/latest">Download v1.0.1</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-top">
+          <img class="hero-icon" src="images/icon.png" alt="MacBackup macOS application icon">
+          <div class="eyebrow">macOS 14+ · Native SwiftUI · 100% Local · MIT</div>
+          <h1>Incremental disaster-recovery backup for developer Macs</h1>
+          <p class="hero-sub">
+            If your laptop dies today, what actually hurts to lose? <strong>SSH keys, <code>.env</code> secrets, months of Claude Code &amp; Codex sessions, and unpushed Git work.</strong> MacBackup archives just what matters — compressed with <code>zstd</code>, SHA-256 verified byte by byte, and restorable on any Mac with built-in <code>tar</code>.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="https://github.com/Lemelson/MacBackup/releases/latest">↓ Download for macOS (v1.0.1)</a>
+            <a class="btn btn-ghost" href="https://github.com/Lemelson/MacBackup">View on GitHub</a>
+          </div>
+          <p class="hero-note">
+            Free &amp; open source · 1.4 MB native SwiftUI app · Zero network access · English &amp; Russian
+          </p>
+        </div>
+
+        <div class="metrics" aria-label="Key metrics">
+          <div class="metric">
+            <div class="metric-val">~150 GB vs 800 GB</div>
+            <div class="metric-label">Skips rebuildable junk like <code>node_modules</code> &amp; caches</div>
+          </div>
+          <div class="metric">
+            <div class="metric-val">SHA-256 verified</div>
+            <div class="metric-label">Every archive decompressed &amp; re-hashed after write</div>
+          </div>
+          <div class="metric">
+            <div class="metric-val">Built-in <code>tar</code></div>
+            <div class="metric-label">Portable <code>zstd</code> lives on the drive — restore anywhere</div>
+          </div>
+          <div class="metric">
+            <div class="metric-val">AI-agent ready</div>
+            <div class="metric-label">Ships <code>AGENTS.md</code> + <code>index.json</code> right on the disk</div>
+          </div>
+        </div>
+
+        <div class="showcase" aria-label="MacBackup app screenshots">
+          <div class="showcase-bar">
+            <div class="tabs" role="tablist" aria-label="MacBackup views">
+              <button class="tab-btn is-active" role="tab" aria-selected="true" data-tab="overview">Overview (Dark)</button>
+              <button class="tab-btn" role="tab" aria-selected="false" data-tab="running">Live Progress</button>
+              <button class="tab-btn" role="tab" aria-selected="false" data-tab="history">History &amp; Logs</button>
+              <button class="tab-btn" role="tab" aria-selected="false" data-tab="light">Light Mode</button>
+            </div>
+            <div class="showcase-caption" id="showcase-caption">
+              Native SwiftUI window with menu-bar status, compression ratios, and per-archive verification.
+            </div>
+          </div>
+
+          <div class="showcase-stage">
+            <div class="showcase-panel is-active" data-panel="overview" data-caption="Native SwiftUI window with menu-bar status, compression ratios, and per-archive verification.">
+              <img src="images/app-overview.png" alt="MacBackup main macOS window in dark mode listing backed-up categories, sizes, compression ratios, and SHA-256 verification status">
+            </div>
+            <div class="showcase-panel" data-panel="running" data-caption="Real-time throughput, ETA, unchanged item skipping, and safe unplug/resume handling.">
+              <img src="images/app-running.png" alt="MacBackup window during an active incremental backup showing progress bar, MB/s speed, and remaining time" loading="lazy">
+            </div>
+            <div class="showcase-panel" data-panel="history" data-caption="Full run history with exact errors and human-readable + JSONL logs mirrored to the drive.">
+              <img src="images/app-history.png" alt="MacBackup run history and scrollable verification log" loading="lazy">
+            </div>
+            <div class="showcase-panel" data-panel="light" data-caption="Follows your macOS appearance automatically in both English and Russian.">
+              <img src="images/app-overview-light.png" alt="MacBackup main window in macOS light mode" loading="lazy">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="inside">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-kicker">Smart Developer Scope</div>
+          <h2>Everything irreplaceable — none of the 600 GB noise</h2>
+          <p class="section-lead">
+            Every folder in your home directory and <code>~/Documents</code> gets its own independent <code>.tar.zst</code> archive. AI coding tools are detected and split cleanly so incremental updates stay fast.
+          </p>
+        </div>
+
+        <div class="svg-frame">
+          <img src="images/whats-inside.svg" alt="Diagram of what MacBackup includes: Keys & access, AI tools like Codex and Claude Code, Projects with full git history, System & settings — and what it skips" loading="lazy">
+        </div>
+
+        <div class="feature-grid">
+          <article class="card">
+            <span class="badge">AI Sessions</span>
+            <h3>Claude Code, Codex &amp; Cursor</h3>
+            <p>Splits Codex sessions by month and Claude Code chats per project, keeping skills, memory, settings, and transcripts intact without re-packing gigabytes each week.</p>
+          </article>
+          <article class="card">
+            <span class="badge badge-green">Integrity</span>
+            <h3>Verified, not hoped</h3>
+            <p>After writing, every archive is decompressed, every file is SHA-256 checked against its manifest, and up to 25 files per part are compared directly against originals on your Mac.</p>
+          </article>
+          <article class="card">
+            <span class="badge">Databases</span>
+            <h3>Safe live SQLite snapshots</h3>
+            <p>Databases belonging to bots, apps, and Codex history are copied via SQLite's online backup API — never caught half-written mid-transaction.</p>
+          </article>
+          <article class="card">
+            <span class="badge">Secrets</span>
+            <h3>All keys collected in one place</h3>
+            <p>SSH keys, <code>.env</code> files, <code>.pem</code> certs, tokens, and optional Keychain passwords are gathered into <code>keys/secret-files</code> on your encrypted drive.</p>
+          </article>
+          <article class="card">
+            <span class="badge">Resilient</span>
+            <h3>Unplug mid-run without corruption</h3>
+            <p>Pull the SSD cable at any moment: MacBackup pauses calmly, cleans up the half-written archive next time you plug in, and resumes from the remaining parts.</p>
+          </article>
+          <article class="card">
+            <span class="badge badge-green">Agent-friendly</span>
+            <h3>Self-documenting backup disk</h3>
+            <p>The drive includes <code>README.md</code>, <code>AGENTS.md</code>, and <code>index.json</code>. On a new Mac, point Claude Code or Codex at the drive and ask it to restore your workspace.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="compare">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-kicker">Comparison</div>
+          <h2>MacBackup vs Time Machine</h2>
+          <p class="section-lead">
+            They solve different problems and work best together. Time Machine is great for full-disk hourly snapshots; MacBackup is the compact, verified developer rescue kit you can restore on any borrowed Mac in minutes.
+          </p>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Dimension</th>
+                <th class="hl">MacBackup</th>
+                <th>Time Machine</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>What it copies</strong></td>
+                <td class="hl"><strong>Work that exists only on this Mac</strong> (keys, AI history, Git repos, dotfiles)</td>
+                <td>Whole disk, macOS system data, apps, caches</td>
+              </tr>
+              <tr>
+                <td><strong>Size on drive</strong></td>
+                <td class="hl"><span class="pill-ok">~15–20% of disk</span> (e.g. 150 GB of 813 GB)</td>
+                <td>500 GB – 1 TB+ plus snapshot history</td>
+              </tr>
+              <tr>
+                <td><strong>Shares an external SSD</strong></td>
+                <td class="hl"><strong>Yes</strong> — one plain folder next to your other files</td>
+                <td>Wants a dedicated volume and space</td>
+              </tr>
+              <tr>
+                <td><strong>Restore any single project</strong></td>
+                <td class="hl"><strong>One <code>tar</code> command</strong> on any Mac (portable <code>zstd</code> included on drive)</td>
+                <td>Migration Assistant / Time Machine browser</td>
+              </tr>
+              <tr>
+                <td><strong>Proof the copy is intact</strong></td>
+                <td class="hl"><span class="pill-ok">SHA-256 re-hashed every run</span></td>
+                <td>Trust</td>
+              </tr>
+              <tr>
+                <td><strong>Understands developer work</strong></td>
+                <td class="hl">Skips <code>node_modules</code>/caches, snapshots live SQLite DBs, reports unpushed Git commits</td>
+                <td>Copies rebuildable junk; live DBs may be caught mid-write</td>
+              </tr>
+              <tr>
+                <td><strong>Readable without the app</strong></td>
+                <td class="hl">Plain <code>.tar.zst</code> + manifests + <code>README.md</code> / <code>AGENTS.md</code></td>
+                <td>Only through Time Machine</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="quickstart">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="section-kicker">How It Works</div>
+          <h2>Fast zstd -9 compression, calm weekly scheduling, zero-dependency restore</h2>
+          <p class="section-lead">
+            First run takes about an hour; weekly incremental runs finish in minutes because unchanged folders are skipped via file-tree fingerprinting.
+          </p>
+        </div>
+
+        <div class="svg-frame" style="margin-bottom:24px;">
+          <img src="images/how-it-works.svg" alt="How a MacBackup run works: fingerprint changes, snapshot SQLite, pack with zstd -9, verify every SHA-256 hash" loading="lazy">
+        </div>
+
+        <div class="split-grid" id="restore">
+          <div class="panel-box">
+            <div class="section-kicker">Quick Start</div>
+            <h3 style="margin:0 0 8px;font-size:1.35rem;">Set up in 3 minutes</h3>
+            <p style="margin:0;color:var(--ink-muted);font-size:0.93rem;">
+              Requires macOS 14+ (Apple Silicon or Intel), Python 3 (built into macOS/Xcode CLT), and Homebrew <code>zstd</code>.
+            </p>
+            <ol class="steps">
+              <li><span class="step-n">1</span><span>Install compression tool once: <code>brew install zstd</code></span></li>
+              <li><span class="step-n">2</span><span>Download <code>MacBackup.zip</code> from <a href="https://github.com/Lemelson/MacBackup/releases/latest" style="color:#93c5fd;">Latest Release</a> and move <code>MacBackup.app</code> to <code>/Applications</code>.</span></li>
+              <li><span class="step-n">3</span><span>Grant <strong>Full Disk Access</strong> in System Settings → Privacy &amp; Security, pick your encrypted backup drive in Settings (⌘,), and click <strong>Back Up Now</strong>.</span></li>
+              <li><span class="step-n">4</span><span>Optional: run <code>./scripts/install-scheduler.sh</code> to back up automatically whenever the drive is plugged in and due.</span></li>
+            </ol>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;">
+              <a class="btn btn-primary" href="https://github.com/Lemelson/MacBackup/releases/latest">↓ Download MacBackup.zip</a>
+              <a class="btn btn-ghost" href="https://github.com/Lemelson/MacBackup#build-from-source">Build from Source</a>
+            </div>
+          </div>
+
+          <div class="panel-box">
+            <div class="section-kicker" style="color:#86efac;">Disaster Recovery</div>
+            <h3 style="margin:0 0 8px;font-size:1.35rem;">Restore on a brand-new Mac</h3>
+            <p style="margin:0;color:var(--ink-muted);font-size:0.93rem;">
+              Nothing to install on the replacement Mac. MacBackup stores a portable, zero-dependency universal <code>zstd</code> binary right inside <code>tools/</code> on your backup disk.
+            </p>
+            <div class="code-card">
+              <div class="code-head">
+                <span>bash — restore from backup drive</span>
+                <button class="copy-btn" type="button" id="copy-restore">Copy</button>
+              </div>
+              <pre id="restore-code"><span class="c-cmd">cd</span> /Volumes/&lt;YourDisk&gt;/MacBackup
+<span class="c-cmd">export</span> PATH="$PWD/tools:$PATH"
+
+<span class="c-dim"># 1. Restore SSH keys &amp; secrets first</span>
+<span class="c-cmd">for</span> a in archives/keys/*.tar.zst; do tar -xf "$a" -C ~; done
+chmod 700 ~/.ssh &amp;&amp; chmod 600 ~/.ssh/*
+
+<span class="c-dim"># 2. Restore a single project — or everything</span>
+<span class="c-cmd">find</span> archives -name '*.tar.zst' -print0 \
+  | xargs -0 -n1 tar -C ~ -xf</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="foot-row">
+        <div>
+          <strong>MacBackup</strong> · MIT License · Local-first, zero telemetry, zero cloud lock-in.
+        </div>
+        <div class="foot-links">
+          <a href="https://github.com/Lemelson/MacBackup">GitHub</a>
+          <a href="https://github.com/Lemelson/MacBackup/releases/latest">Releases (v1.0.1)</a>
+          <a href="https://github.com/Lemelson/MacBackup/blob/main/engine/DISK-README.md">Disk README</a>
+          <a href="https://github.com/Lemelson/MacBackup/blob/main/engine/DISK-AGENTS.md">Disk AGENTS.md</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var tabs = document.querySelectorAll('.tab-btn');
+      var panels = document.querySelectorAll('.showcase-panel');
+      var caption = document.getElementById('showcase-caption');
+      tabs.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var target = btn.getAttribute('data-tab');
+          tabs.forEach(function (b) {
+            var active = b === btn;
+            b.classList.toggle('is-active', active);
+            b.setAttribute('aria-selected', active ? 'true' : 'false');
+          });
+          panels.forEach(function (p) {
+            var active = p.getAttribute('data-panel') === target;
+            p.classList.toggle('is-active', active);
+            if (active && caption) caption.textContent = p.getAttribute('data-caption') || '';
+          });
+        });
+      });
+
+      var copyBtn = document.getElementById('copy-restore');
+      var codeEl = document.getElementById('restore-code');
+      if (copyBtn && codeEl && navigator.clipboard) {
+        copyBtn.addEventListener('click', function () {
+          navigator.clipboard.writeText(codeEl.innerText).then(function () {
+            copyBtn.textContent = 'Copied';
+            setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1800);
+          });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

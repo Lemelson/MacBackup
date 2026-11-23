@@ -5,13 +5,27 @@
 <h1 align="center">MacBackup</h1>
 
 <p align="center">
-  <b>A disaster-recovery backup for people who build things on their Mac.</b><br>
-  Keys, server access, Codex &amp; Claude Code history, every project with its git history —<br>
-  compressed, verified byte by byte, and restorable on any Mac with one built-in command.
+  <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white">
+  <img alt="SwiftUI" src="https://img.shields.io/badge/SwiftUI-native-F05138?logo=swift&logoColor=white">
+  <a href="https://github.com/Lemelson/MacBackup/releases/latest"><img alt="Latest Release" src="https://img.shields.io/github/v/release/Lemelson/MacBackup?color=2f80ed"></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-22c55e"></a>
 </p>
 
 <p align="center">
-  <a href="../../releases/latest">Download</a> ·
+  <b>Incremental disaster-recovery backup for developer Macs.</b><br>
+  SSH keys, <code>.env</code> secrets, Claude Code &amp; Codex history, every project with its git history —<br>
+  compressed with <code>zstd</code>, verified byte by byte, and restorable on any Mac with built-in <code>tar</code>.
+</p>
+
+<p align="center">
+  <a href="https://github.com/Lemelson/MacBackup/releases/latest"><img alt="Download for macOS" src="https://img.shields.io/badge/⬇%20Download%20for%20macOS-Latest%20Release-2f80ed?style=for-the-badge"></a>
+  &nbsp;
+  <a href="https://lemelson.github.io/MacBackup/"><img alt="Project Website" src="https://img.shields.io/badge/🌐%20Website-MacBackup-141c2c?style=for-the-badge"></a>
+</p>
+
+<p align="center">
+  <a href="https://lemelson.github.io/MacBackup/">Website</a> ·
+  <a href="https://github.com/Lemelson/MacBackup/releases/latest">Download</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#restore-on-a-new-mac">Restore</a> ·
   <a href="#macbackup-vs-time-machine">vs Time Machine</a> ·
